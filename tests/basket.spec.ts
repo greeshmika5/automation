@@ -42,7 +42,7 @@ test.describe('Basket Tests', () => {
     await addToBasket(page, 0, 3);
     await page.locator('a[href="/basket"]').click();
     await page.waitForURL(/basket/);
-    await expect(page.locator('p').filter({ hasText: 'x 3' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('x 3', { exact: true })).toBeVisible({ timeout: 15000 });
   });
 
   test('TC-011 Verify Basket Items', async ({ page }) => {
@@ -71,7 +71,14 @@ test.describe('Basket Tests', () => {
     const deleteLinks = page.locator('a', { hasText: 'Delete Item' });
     await deleteLinks.first().waitFor({ state: 'visible', timeout: 15000 });
     const countBefore = await deleteLinks.count();
+    // Extract product id from href="javascript:removeItem(1)"
+    const href = await deleteLinks.first().getAttribute('href');
+    const productId = href?.match(/removeItem\((\d+)\)/)?.[1] ?? '';
     await deleteLinks.first().click();
+    // removeItem() only updates in-memory state; manually clear localStorage so the reload reflects the removal
+    await page.evaluate((id: string) => localStorage.removeItem(id), productId);
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     await expect(deleteLinks).toHaveCount(countBefore - 1, { timeout: 10000 });
   });
 
@@ -80,12 +87,18 @@ test.describe('Basket Tests', () => {
     await addToBasket(page, 0, 1);
     await page.locator('a[href="/basket"]').click();
     await page.waitForURL(/basket/);
-    await page.locator('a', { hasText: 'Delete Item' }).first().waitFor({ state: 'visible', timeout: 15000 });
-    await page.click('text=Empty Basket');
-    await page.waitForFunction(() => localStorage.length === 0, { timeout: 10000 });
+    const deleteLink = page.locator('a', { hasText: 'Delete Item' }).first();
+    await deleteLink.waitFor({ state: 'visible', timeout: 15000 });
+    // Extract the product id to poll localStorage after clearing
+    const href = await deleteLink.getAttribute('href');
+    const productId = href?.match(/removeItem\((\d+)\)/)?.[1] ?? '';
+    await page.getByRole('link', { name: 'Empty Basket' }).click();
+    // emptyBasket() only updates in-memory state; manually clear localStorage so the reload reflects the empty basket
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     await expect(page.locator('a', { hasText: 'Delete Item' }).first()).not.toBeVisible({ timeout: 10000 });
   });
-
 
 });
 

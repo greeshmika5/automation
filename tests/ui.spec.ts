@@ -54,12 +54,14 @@ test.describe('UI & Edge Tests', () => {
     await page.locator('#name').first().fill('A'.repeat(200));
     await expect(page.locator('#name').first()).toHaveValue('A'.repeat(30));
   });
-
+2
   test('TC-040 Special Character Input', async ({ page }) => {
     await page.goto('https://sweetshop.netlify.app/basket');
     await page.fill('input[type="email"]', '@@@###');
-    await page.click('text=Continue to checkout');
-    await expect(page.locator('text=Please enter a valid email address for shipping updates.')).toBeVisible();
+    await page.getByRole('button', { name: 'Continue to checkout' }).click();
+    await expect(
+      page.locator('.invalid-feedback').filter({ hasText: 'Please enter a valid email address for shipping updates.' })
+    ).toBeVisible({ timeout: 5000 });
   });
 
 });
