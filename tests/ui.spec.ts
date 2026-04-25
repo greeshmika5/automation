@@ -33,11 +33,12 @@ test.describe('UI & Edge Tests', () => {
 
   test('TC-038 Refresh After Add', async ({ page }) => {
     await page.goto('https://sweetshop.netlify.app/sweets');
-    await page.locator('text=Add to Basket').first().click();
-    await page.waitForFunction(() => {
-      const basket = localStorage.getItem('basket');
-      return basket && JSON.parse(basket).length > 0;
-    });
+    const dataId = await page.locator('.addItem').first().getAttribute('data-id');
+    await page.locator('.addItem').first().click();
+    await page.waitForFunction(
+      (id: string | null) => id !== null && localStorage.getItem(id) !== null,
+      dataId
+    );
     await page.locator('a[href="/basket"]').click();
     await page.waitForURL(/basket/);
     await expect(page.locator('h6.my-0').filter({ hasText: 'Chocolate Cups' })).toBeVisible({ timeout: 15000 });

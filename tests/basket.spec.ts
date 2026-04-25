@@ -1,15 +1,17 @@
 import { test, expect } from '@playwright/test';
 
-// Helper: add items to basket and wait for localStorage to confirm the write
-async function addToBasket(page: any, nth: number, expectedCount: number) {
-  await page.locator('text=Add to Basket').nth(nth).click();
+// localStorage format: key = product data-id (e.g. "1"), value = '{"id":"1","name":"Chocolate Cups","price":"1.00","quantity":1}'
+// Helper: click nth Add-to-Basket button and wait until that item's quantity reaches expectedQty in localStorage
+async function addToBasket(page: any, nth: number, expectedQty: number = 1) {
+  const dataId = await page.locator('.addItem').nth(nth).getAttribute('data-id');
+  await page.locator('.addItem').nth(nth).click();
   await page.waitForFunction(
-    (count: number) => {
-      const basket = localStorage.getItem('basket');
-      if (!basket) return false;
-      try { return JSON.parse(basket).length >= count; } catch { return false; }
+    ([id, qty]: [string, number]) => {
+      const raw = localStorage.getItem(id);
+      if (!raw) return false;
+      try { return JSON.parse(raw).quantity >= qty; } catch { return false; }
     },
-    expectedCount
+    [dataId, expectedQty] as [string, number]
   );
 }
 
@@ -25,8 +27,8 @@ test.describe('Basket Tests', () => {
 
   test('TC-009 Add Multiple Products', async ({ page }) => {
     await page.goto('https://sweetshop.netlify.app/sweets');
-    await addToBasket(page, 0, 1); // Chocolate Cups
-    await addToBasket(page, 1, 2); // Sherbert Straws
+    await addToBasket(page, 0, 1); // Chocolate Cups (id=1)
+    await addToBasket(page, 1, 1); // Sherbert Straws (id=2)
     await page.locator('a[href="/basket"]').click();
     await page.waitForURL(/basket/);
     await expect(page.locator('h6.my-0').filter({ hasText: 'Chocolate Cups' })).toBeVisible({ timeout: 15000 });
@@ -54,7 +56,7 @@ test.describe('Basket Tests', () => {
   test('TC-012 Verify Total Calculation', async ({ page }) => {
     await page.goto('https://sweetshop.netlify.app/sweets');
     await addToBasket(page, 0, 1); // Chocolate Cups £1.00
-    await addToBasket(page, 1, 2); // Sherbert Straws £0.75
+    await addToBasket(page, 1, 1); // Sherbert Straws £0.75
     await page.locator('a[href="/basket"]').click();
     await page.waitForURL(/basket/);
     await expect(page.locator('span').filter({ hasText: '£1.00' }).first()).toBeVisible({ timeout: 15000 });
@@ -80,12 +82,11 @@ test.describe('Basket Tests', () => {
     await page.waitForURL(/basket/);
     await page.locator('a', { hasText: 'Delete Item' }).first().waitFor({ state: 'visible', timeout: 15000 });
     await page.click('text=Empty Basket');
-    await page.waitForFunction(() => {
-      const basket = localStorage.getItem('basket');
-      return !basket || JSON.parse(basket).length === 0;
-    }, { timeout: 10000 });
+    await page.waitForFunction(() => localStorage.length === 0, { timeout: 10000 });
     await expect(page.locator('a', { hasText: 'Delete Item' }).first()).not.toBeVisible({ timeout: 10000 });
   });
 
+
 });
+
 
