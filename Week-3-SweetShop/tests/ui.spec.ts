@@ -54,7 +54,7 @@ test.describe('UI & Edge Tests', () => {
     await page.locator('#name').first().fill('A'.repeat(200));
     await expect(page.locator('#name').first()).toHaveValue('A'.repeat(30));
   });
-2
+
   test('TC-040 Special Character Input', async ({ page }) => {
     await page.goto('https://sweetshop.netlify.app/basket');
     await page.fill('input[type="email"]', '@@@###');
