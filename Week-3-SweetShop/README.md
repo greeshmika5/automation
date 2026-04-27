@@ -4,10 +4,12 @@
 
 This folder contains both UI and API automation assignments for the Sweet Shop project.
 
+
 ### Structure
 
 - All UI Playwright tests are in `tests/`
 - All API Playwright tests are in `api-tests/`
+- Screenshots of the reports are available in the `reports/` folder.
 
 
 ## How to Run
