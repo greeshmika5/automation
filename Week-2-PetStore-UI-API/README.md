@@ -6,6 +6,8 @@ All Week 2 Pet Store API and Swag Labs UI automation artifacts are included in t
 
 ### Key Documents
 - [Pet Store Test Cases.xlsx](./Pet%20Store%20Test%20Cases.xlsx)
+- Or access the test cases directly online via Google Sheets:
+	[Pet Store Test Cases (Google Sheets)](https://docs.google.com/spreadsheets/d/1JpFtCwPymXq7BYPAF_5kS69FEmBnz-p3Weo8Sp369T8/edit?gid=0#gid=0)
 
 ### How to Run
 
